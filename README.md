@@ -4,6 +4,12 @@
 
 Application SaaS de facturation — Web (React + Vite + Supabase).
 
+## Documentation
+
+- [Guide d'utilisation](docs/GUIDE_UTILISATION.md)
+- [Roadmap produit](docs/ROADMAP.md)
+- [Document de passation](docs/PASSATION.md)
+
 ---
 
 ## Stack technique
