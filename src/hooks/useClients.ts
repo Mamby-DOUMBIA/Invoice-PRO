@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { useCurrentOrg } from './useAuth'
 import type { Client, ClientInsert, ClientUpdate } from '@/types/database'
 import toast from 'react-hot-toast'
+import { invalidateDerivedData } from '@/utils/queryInvalidation'
 
 export function useClients(search = '') {
   const org = useCurrentOrg()
@@ -58,7 +59,7 @@ export function useCreateClient() {
       if (error) throw error
       return r as Client
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['clients'] }); toast.success('Client créé') },
+    onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['clients'] }), invalidateDerivedData(qc)]); toast.success('Client créé') },
     onError: () => toast.error('Erreur lors de la création'),
   })
 }
@@ -71,7 +72,7 @@ export function useUpdateClient() {
       if (error) throw error
       return r as Client
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['clients'] }); toast.success('Client modifié') },
+    onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['clients'] }), invalidateDerivedData(qc)]); toast.success('Client modifié') },
     onError: () => toast.error('Erreur lors de la modification'),
   })
 }
@@ -83,7 +84,7 @@ export function useDeleteClient() {
       const { error } = await supabase.from('clients').delete().eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['clients'] }); toast.success('Client supprimé') },
+    onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['clients'] }), invalidateDerivedData(qc)]); toast.success('Client supprimé') },
     onError: () => toast.error('Impossible de supprimer ce client'),
   })
 }

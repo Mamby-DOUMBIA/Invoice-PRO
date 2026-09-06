@@ -69,6 +69,7 @@ Le bouton « Nouveau bon de commande » ne faisait rien. Les corrections suivant
 - Remote configuré : `https://github.com/Mamby-DOUMBIA/Invoice-PRO.git`.
 - Contrôle CI ajouté dans `.github/workflows/ci.yml` : installation reproductible, build, contrôle des fichiers sensibles et scan de motifs de credentials.
 - Refonte UI premium ajoutée : typographie Manrope, palette indigo/teal/corail, surfaces plus profondes, sidebar responsive, dashboard hiérarchisé, formulaires et tableaux harmonisés, mode sombre conservé.
+- Invalidation centralisée ajoutée dans `src/utils/queryInvalidation.ts` : les créations, modifications, suppressions, conversions et paiements rafraîchissent automatiquement les indicateurs dashboard, graphiques, meilleurs clients, factures récentes, statistiques clients et listes concernées.
 
 ## 3. Travaux restant à faire
 
@@ -266,6 +267,7 @@ Effectuer la connexion OAuth manuelle dans Vercel, puis pousser un petit commit 
 - GitHub CLI est installé hors du `PATH` standard ; son chemin local utilisé pendant la configuration était `C:\Mamby_Personal_Apps\Mes_applications_Perso\Github_CLI\bin\gh.exe`.
 - Les scripts de maintenance restent présents localement mais sont ignorés par Git. Ils doivent être nettoyés ou réécrits avec des variables d'environnement avant une future publication volontaire.
 - Le workflow GitHub Actions est ajouté mais son résultat ne peut être confirmé qu'après réception du prochain push par GitHub.
+- Les dépendances locales peuvent être verrouillées par Windows après un `npm ci` interrompu ; dans ce cas, terminer les processus Node concernés puis relancer `npm install` avant les validations locales.
 - Le build affiche un avertissement de gros chunks, notamment le bundle PDF. Ce n'est pas bloquant, mais un futur travail de découpage peut améliorer les performances.
 - Certaines dépendances signalent des versions obsolètes et cinq vulnérabilités npm ont été signalées lors de l'installation. Exécuter un audit séparé avant de lancer une mise à jour automatique.
 

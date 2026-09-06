@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { useCurrentOrg } from './useAuth'
 import type { Quote, QuoteInsert, QuoteItem, QuoteItemInsert } from '@/types/database'
 import { calcDocumentTotals, applyRounding } from '@/utils/calc'
+import { invalidateDerivedData } from '@/utils/queryInvalidation'
 import toast from 'react-hot-toast'
 
 function calcLine(item: { quantity: number; unit_price: number; discount_pct: number; discount_amt: number; tax_rate: number }) {
@@ -74,7 +75,7 @@ export function useCreateQuote() {
       await supabase.from('quote_items').insert(lineItems)
       return q as Quote
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['quotes'] }); toast.success('Devis créé') },
+    onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['quotes'] }), invalidateDerivedData(qc)]); toast.success('Devis créé') },
     onError: () => toast.error('Erreur lors de la création'),
   })
 }
@@ -85,7 +86,7 @@ export function useUpdateQuoteStatus() {
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       await supabase.from('quotes').update({ status }).eq('id', id)
     },
-    onSuccess: (_, v) => { qc.invalidateQueries({ queryKey: ['quotes'] }); qc.invalidateQueries({ queryKey: ['quote', v.id] }); toast.success('Statut mis à jour') },
+    onSuccess: async (_, v) => { await Promise.all([qc.invalidateQueries({ queryKey: ['quotes'] }), qc.invalidateQueries({ queryKey: ['quote', v.id] }), invalidateDerivedData(qc)]); toast.success('Statut mis à jour') },
   })
 }
 
@@ -143,7 +144,7 @@ export function useConvertQuoteToInvoice() {
 
       return inv as { id: string }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['quotes'] }); qc.invalidateQueries({ queryKey: ['invoices'] }); toast.success('Devis converti en facture !') },
+    onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['quotes'] }), qc.invalidateQueries({ queryKey: ['invoices'] }), invalidateDerivedData(qc)]); toast.success('Devis converti en facture !') },
     onError: () => toast.error('Erreur lors de la conversion'),
   })
 }
@@ -152,6 +153,6 @@ export function useDeleteQuote() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => { await supabase.from('quotes').delete().eq('id', id) },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['quotes'] }); toast.success('Devis supprimé') },
+    onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['quotes'] }), invalidateDerivedData(qc)]); toast.success('Devis supprimé') },
   })
 }

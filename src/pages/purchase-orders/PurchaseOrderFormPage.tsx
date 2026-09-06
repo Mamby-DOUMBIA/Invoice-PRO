@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import type { Client } from '@/types/database'
 import toast from 'react-hot-toast'
+import { useQueryClient } from '@tanstack/react-query'
+import { invalidateDerivedData } from '@/utils/queryInvalidation'
 
 const schema = z.object({
   date: z.string().min(1),
@@ -21,6 +23,7 @@ const schema = z.object({
 
 export function PurchaseOrderFormPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const org = useCurrentOrg()
   const user = useCurrentUser()
   const [client, setClient] = useState<Client | null>(null)
@@ -75,6 +78,10 @@ export function PurchaseOrderFormPage() {
         .single()
 
       if (error) throw error
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['purchase-orders'] }),
+        invalidateDerivedData(queryClient),
+      ])
       toast.success('Bon de commande créé.')
       navigate('/purchase-orders')
       return order

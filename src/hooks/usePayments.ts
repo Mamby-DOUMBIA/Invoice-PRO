@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { useCurrentOrg } from './useAuth'
 import type { Payment, PaymentMethod, Receipt } from '@/types/database'
 import toast from 'react-hot-toast'
+import { invalidateDerivedData } from '@/utils/queryInvalidation'
 
 /** Input type for creating a payment — no organization_id or created_by needed */
 export interface PaymentInput {
@@ -77,6 +78,7 @@ export function useCreatePayment() {
       qc.invalidateQueries({ queryKey: ['invoice', vars.invoice_id] })
       qc.invalidateQueries({ queryKey: ['invoices'] })
       qc.invalidateQueries({ queryKey: ['receipts'] })
+      await invalidateDerivedData(qc)
       toast.success('Paiement enregistré')
     },
     onError: () => toast.error("Erreur lors de l'enregistrement"),

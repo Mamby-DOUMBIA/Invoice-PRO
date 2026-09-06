@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { useCurrentOrg } from './useAuth'
 import type { Invoice, InvoiceInsert, InvoiceUpdate, InvoiceItem, InvoiceItemInsert } from '@/types/database'
 import { calcDocumentTotals, applyRounding } from '@/utils/calc'
+import { invalidateDerivedData } from '@/utils/queryInvalidation'
 import toast from 'react-hot-toast'
 
 export type InvoiceWithClient = Invoice & {
@@ -103,7 +104,7 @@ export function useCreateInvoice() {
 
       return inv as Invoice
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['invoices'] }); toast.success('Facture créée') },
+    onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['invoices'] }), invalidateDerivedData(qc)]); toast.success('Facture créée') },
     onError: (e) => { console.error(e); toast.error('Erreur lors de la création') },
   })
 }
@@ -141,9 +142,12 @@ export function useUpdateInvoice() {
         await supabase.from('invoices').update(data).eq('id', id)
       }
     },
-    onSuccess: (_, vars) => {
-      qc.invalidateQueries({ queryKey: ['invoices'] })
-      qc.invalidateQueries({ queryKey: ['invoice', vars.id] })
+    onSuccess: async (_, vars) => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['invoices'] }),
+        qc.invalidateQueries({ queryKey: ['invoice', vars.id] }),
+        invalidateDerivedData(qc),
+      ])
       toast.success('Facture mise à jour')
     },
     onError: () => toast.error('Erreur lors de la mise à jour'),
@@ -157,7 +161,7 @@ export function useDeleteInvoice() {
       const { error } = await supabase.from('invoices').delete().eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['invoices'] }); toast.success('Facture supprimée') },
+    onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['invoices'] }), invalidateDerivedData(qc)]); toast.success('Facture supprimée') },
     onError: () => toast.error('Erreur lors de la suppression'),
   })
 }
@@ -168,9 +172,12 @@ export function useCancelInvoice() {
     mutationFn: async (id: string) => {
       await supabase.from('invoices').update({ status: 'cancelled', cancelled_at: new Date().toISOString() }).eq('id', id)
     },
-    onSuccess: (_, id) => {
-      qc.invalidateQueries({ queryKey: ['invoices'] })
-      qc.invalidateQueries({ queryKey: ['invoice', id] })
+    onSuccess: async (_, id) => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['invoices'] }),
+        qc.invalidateQueries({ queryKey: ['invoice', id] }),
+        invalidateDerivedData(qc),
+      ])
       toast.success('Facture annulée')
     },
   })
