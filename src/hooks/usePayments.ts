@@ -73,7 +73,7 @@ export function useCreatePayment() {
 
       return payment as Payment
     },
-    onSuccess: (_, vars) => {
+    onSuccess: async (_, vars) => {
       qc.invalidateQueries({ queryKey: ['payments'] })
       qc.invalidateQueries({ queryKey: ['invoice', vars.invoice_id] })
       qc.invalidateQueries({ queryKey: ['invoices'] })
