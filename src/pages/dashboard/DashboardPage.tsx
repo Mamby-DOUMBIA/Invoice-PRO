@@ -31,14 +31,15 @@ export function DashboardPage() {
   const { data: recentInvoices = [] } = useRecentInvoices(5)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Bonjour 👋
+          <p className="text-xs font-bold uppercase tracking-[.14em] text-indigo-500 mb-2">Vue d'ensemble</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            Bonjour
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">{org?.name}</p>
+          <p className="text-slate-500 text-sm mt-1">{org?.name} <span className="text-slate-300 dark:text-slate-600">/</span> voici votre activité.</p>
         </div>
 
         {/* Quick actions */}
@@ -59,14 +60,14 @@ export function DashboardPage() {
       </div>
 
       {/* Period selector */}
-      <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1 w-fit">
+      <div className="flex gap-1 bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-1.5 w-fit shadow-sm">
         {(Object.keys(PERIOD_LABELS) as Period[]).map(p => (
           <button
             key={p}
             onClick={() => setPeriod(p)}
             className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               period === p
-                ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-sm'
+                ? 'bg-indigo-600 text-white shadow-[0_5px_12px_rgba(61,90,254,.22)]'
                 : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
@@ -122,7 +123,7 @@ export function DashboardPage() {
       {/* Chart + Top clients */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue chart */}
-        <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
+        <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-[0_10px_28px_rgba(30,45,80,.045)]">
           <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Évolution du CA (6 mois)</h2>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={chartData} barSize={28}>
@@ -138,7 +139,7 @@ export function DashboardPage() {
         </div>
 
         {/* Top clients */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-[0_10px_28px_rgba(30,45,80,.045)]">
           <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Meilleurs clients</h2>
           {topClients.length === 0 ? (
             <p className="text-sm text-slate-400 text-center py-8">Aucune donnée</p>
@@ -163,7 +164,7 @@ export function DashboardPage() {
       </div>
 
       {/* Recent invoices */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-[0_10px_28px_rgba(30,45,80,.045)]">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
           <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Factures récentes</h2>
           <button onClick={() => navigate('/invoices')} className="text-sm text-blue-600 hover:underline">Voir tout →</button>
@@ -208,7 +209,7 @@ export function DashboardPage() {
 
 function StatMini({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-3">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 px-4 py-3 shadow-sm">
       <p className="text-xs text-slate-400">{label}</p>
       <p className="text-xl font-bold text-slate-900 dark:text-white font-mono-nums mt-0.5">{value}</p>
     </div>

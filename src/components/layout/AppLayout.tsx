@@ -26,7 +26,7 @@ export function AppLayout() {
   }
 
   return (
-    <div className={cn('flex min-h-screen bg-slate-50 dark:bg-slate-950', darkMode && 'dark')}>
+    <div className={cn('flex min-h-screen bg-transparent dark:bg-slate-950', darkMode && 'dark')}>
       {/* Desktop sidebar */}
       <div className="hidden md:block">
         <Sidebar
@@ -43,7 +43,7 @@ export function AppLayout() {
         collapsed ? 'md:ml-16' : 'md:ml-60',
         'pb-20 md:pb-0'
       )}>
-        <div className="min-h-full p-4 md:p-6 lg:p-8">
+        <div className="app-page-enter min-h-full p-4 md:p-7 lg:p-10 max-w-[1600px] mx-auto">
           <Outlet />
         </div>
       </main>

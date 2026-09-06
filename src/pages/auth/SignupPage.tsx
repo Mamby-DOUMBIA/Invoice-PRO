@@ -135,21 +135,21 @@ export function SignupPage() {
 
   // ── Signup form ────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-transparent dark:bg-slate-950 p-4">
       <div className="w-full max-w-sm">
         {/* Header */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-3 shadow-lg">
+          <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-teal-500 rounded-2xl flex items-center justify-center mb-4 shadow-[0_12px_24px_rgba(61,90,254,.24)]">
             <FileText className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">InvoicePro</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">InvoicePro</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Créez votre compte gratuitement
           </p>
         </div>
 
         {/* Form */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+        <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur rounded-3xl border border-slate-200/80 dark:border-slate-800 p-7 shadow-[0_18px_45px_rgba(30,45,80,.1)]">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             <Input
               label="Nom complet"

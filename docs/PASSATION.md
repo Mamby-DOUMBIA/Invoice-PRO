@@ -10,7 +10,7 @@ InvoicePro est une application React/Vite utilisant Supabase pour l'authentifica
 
 - Dépôt GitHub : https://github.com/Mamby-DOUMBIA/Invoice-PRO
 - Branche principale : `main`
-- Commit initial publié : `934a8f5`
+- Commits publiés : `934a8f5`, puis `a28e2cb` pour la passation
 - Production Vercel : https://invoicepro-ashen-ten.vercel.app/
 - Dernier déploiement vérifié : `Ready`
 - `/` : `200`
@@ -67,8 +67,12 @@ Le bouton « Nouveau bon de commande » ne faisait rien. Les corrections suivant
 - Vérification des empreintes connues de secrets dans le contenu staged : aucune correspondance.
 - Dépôt GitHub créé et poussé : `Mamby-DOUMBIA/Invoice-PRO`.
 - Remote configuré : `https://github.com/Mamby-DOUMBIA/Invoice-PRO.git`.
+- Contrôle CI ajouté dans `.github/workflows/ci.yml` : installation reproductible, build, contrôle des fichiers sensibles et scan de motifs de credentials.
+- Refonte UI premium ajoutée : typographie Manrope, palette indigo/teal/corail, surfaces plus profondes, sidebar responsive, dashboard hiérarchisé, formulaires et tableaux harmonisés, mode sombre conservé.
 
 ## 3. Travaux restant à faire
+
+Les contrôles applicatifs, le build, le déploiement Vercel et la publication GitHub sont réalisés. Les éléments ci-dessous sont les derniers points externes nécessaires pour déclarer la production totalement clôturée.
 
 ### Priorité 0 : rotation des secrets
 
@@ -129,6 +133,8 @@ Procédure manuelle :
 7. Vérifier que la commande de build est `npm run build`.
 8. Lancer un commit de test ou un redeploy et vérifier le statut `Ready`.
 
+Le workflow CI est déjà présent dans `.github/workflows/ci.yml` et s'exécutera dès que GitHub recevra un push ou une pull request.
+
 ### Priorité 3 : domaine
 
 `invoicepro.vercel.app` est déjà pris par un autre projet Vercel et Vercel a refusé l'alias avec `403`.
@@ -150,6 +156,12 @@ Décision recommandée : choisir une seule stratégie et la documenter :
 - soit migrer le formulaire vers `/api/auth/register`, puis gérer proprement le retour de session et la confirmation email.
 
 Ne jamais utiliser `service_role` pour l'inscription depuis le navigateur.
+
+Le contrat serveur `/api/auth/register` est présent et valide les entrées. Le formulaire frontend utilise encore l'API Supabase directe, ce qui est cohérent avec Supabase et évite de faire transiter la clé service. Il n'est pas nécessaire de migrer vers l'endpoint Vercel tant que ce choix est assumé et testé.
+
+### Design et expérience utilisateur
+
+La refonte visuelle est livrée dans les primitives partagées et le shell. Les comportements métier n'ont pas été remplacés : routes, hooks, actions, formulaires et données restent inchangés. Toute évolution visuelle future doit continuer à passer par les primitives `Button`, `Card`, `Input`, `Select`, `Badge` et `Table` plutôt que de multiplier des styles ponctuels.
 
 ## 4. Contraintes et garde-fous
 
@@ -253,6 +265,7 @@ Effectuer la connexion OAuth manuelle dans Vercel, puis pousser un petit commit 
 - La rotation automatique Supabase/PostgreSQL n'a pas été possible avec les anciennes informations.
 - GitHub CLI est installé hors du `PATH` standard ; son chemin local utilisé pendant la configuration était `C:\Mamby_Personal_Apps\Mes_applications_Perso\Github_CLI\bin\gh.exe`.
 - Les scripts de maintenance restent présents localement mais sont ignorés par Git. Ils doivent être nettoyés ou réécrits avec des variables d'environnement avant une future publication volontaire.
+- Le workflow GitHub Actions est ajouté mais son résultat ne peut être confirmé qu'après réception du prochain push par GitHub.
 - Le build affiche un avertissement de gros chunks, notamment le bundle PDF. Ce n'est pas bloquant, mais un futur travail de découpage peut améliorer les performances.
 - Certaines dépendances signalent des versions obsolètes et cinq vulnérabilités npm ont été signalées lors de l'installation. Exécuter un audit séparé avant de lancer une mise à jour automatique.
 
@@ -267,3 +280,5 @@ La passation pourra être considérée comme terminée lorsque :
 - la connexion GitHub OAuth Vercel sera active, ou explicitement refusée par choix ;
 - le domaine final sera confirmé ;
 - aucune ancienne valeur sensible ne sera présente dans le dépôt ou dans son historique récent.
+
+Tant que les rotations Supabase/PostgreSQL et la connexion OAuth Vercel-GitHub ne sont pas effectuées manuellement, le projet est techniquement déployé mais ne doit pas être déclaré « 100 % clôturé ».

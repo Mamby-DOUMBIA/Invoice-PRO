@@ -22,7 +22,7 @@ export function Table<T extends { id: string }>({
   columns, data, loading, emptyMessage = 'Aucune donnée', onRowClick, rowClassName
 }: TableProps<T>) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+    <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_28px_rgba(30,45,80,.045)] dark:bg-slate-900 dark:border-slate-800 dark:shadow-none">
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
@@ -43,7 +43,7 @@ export function Table<T extends { id: string }>({
         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
           {loading ? (
             Array.from({ length: 5 }).map((_, i) => (
-              <tr key={i}>
+              <tr key={i} className="animate-pulse">
                 {columns.map((col) => (
                   <td key={col.key} className="px-4 py-3">
                     <Skeleton className="h-4 w-full" />
@@ -63,7 +63,7 @@ export function Table<T extends { id: string }>({
                 key={row.id}
                 className={cn(
                   'bg-white dark:bg-slate-900 transition-colors',
-                  onRowClick && 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50',
+                  onRowClick && 'cursor-pointer hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20',
                   rowClassName?.(row)
                 )}
                 onClick={() => onRowClick?.(row)}

@@ -43,17 +43,17 @@ export function Sidebar({ collapsed, onToggle, darkMode, onToggleDark }: Sidebar
 
   return (
     <aside className={cn(
-      'fixed inset-y-0 left-0 z-40 flex flex-col bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 transition-all duration-200',
+      'fixed inset-y-0 left-0 z-40 flex flex-col bg-white/90 dark:bg-slate-950/95 backdrop-blur-xl border-r border-slate-200/80 dark:border-slate-800 transition-all duration-300',
       collapsed ? 'w-16' : 'w-60'
     )}>
       {/* Logo */}
-      <div className="flex items-center h-16 px-4 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
+      <div className="flex items-center h-[76px] px-4 border-b border-slate-200/80 dark:border-slate-800 flex-shrink-0">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+          <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-teal-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-[0_7px_16px_rgba(61,90,254,.24)]">
             <FileText className="w-4 h-4 text-white" />
           </div>
           {!collapsed && (
-            <span className="font-bold text-slate-900 dark:text-white truncate">InvoicePro</span>
+            <span className="font-extrabold tracking-tight text-slate-900 dark:text-white truncate">InvoicePro</span>
           )}
         </div>
         <button
@@ -66,11 +66,11 @@ export function Sidebar({ collapsed, onToggle, darkMode, onToggleDark }: Sidebar
       </div>
 
       {/* CTA New Invoice */}
-      <div className="px-3 pt-4 pb-2">
+      <div className="px-3 pt-5 pb-3">
         <button
           onClick={() => navigate('/invoices/new')}
           className={cn(
-            'w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors shadow-sm',
+            'w-full flex items-center gap-2 bg-gradient-to-br from-indigo-500 to-indigo-700 hover:from-indigo-600 hover:to-indigo-800 text-white rounded-xl font-bold transition-all duration-200 shadow-[0_8px_18px_rgba(61,90,254,.22)] active:scale-[.98]',
             collapsed ? 'justify-center p-2.5' : 'px-3 py-2.5 text-sm'
           )}
           title="Nouvelle facture"
@@ -81,17 +81,17 @@ export function Sidebar({ collapsed, onToggle, darkMode, onToggleDark }: Sidebar
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-1">
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
             title={collapsed ? label : undefined}
             className={({ isActive }) => cn(
-              'flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium transition-colors',
+              'flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200',
               isActive
-                ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200',
+                ? 'bg-indigo-50 text-indigo-700 shadow-sm dark:bg-indigo-900/30 dark:text-indigo-300'
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200',
               collapsed && 'justify-center px-2'
             )}
           >
@@ -102,14 +102,14 @@ export function Sidebar({ collapsed, onToggle, darkMode, onToggleDark }: Sidebar
       </nav>
 
       {/* Bottom */}
-      <div className="px-2 pb-4 space-y-0.5 border-t border-slate-200 dark:border-slate-800 pt-2">
+      <div className="px-2 pb-4 space-y-1 border-t border-slate-200/80 dark:border-slate-800 pt-3">
         <NavLink
           to="/settings"
           title={collapsed ? 'Paramètres' : undefined}
           className={({ isActive }) => cn(
-            'flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium transition-colors',
+            'flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-sm font-semibold transition-colors',
             isActive
-              ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+              ? 'bg-indigo-50 text-indigo-700 shadow-sm dark:bg-indigo-900/30 dark:text-indigo-300'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800',
             collapsed && 'justify-center px-2'
           )}
@@ -122,7 +122,7 @@ export function Sidebar({ collapsed, onToggle, darkMode, onToggleDark }: Sidebar
           onClick={onToggleDark}
           title={darkMode ? 'Mode clair' : 'Mode sombre'}
           className={cn(
-            'w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors',
+            'w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-sm font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors',
             collapsed && 'justify-center px-2'
           )}
         >
@@ -134,7 +134,7 @@ export function Sidebar({ collapsed, onToggle, darkMode, onToggleDark }: Sidebar
           onClick={handleLogout}
           title={collapsed ? 'Déconnexion' : undefined}
           className={cn(
-            'w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors',
+            'w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-sm font-semibold text-slate-500 dark:text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors',
             collapsed && 'justify-center px-2'
           )}
         >
@@ -163,7 +163,7 @@ export function BottomNav() {
     { to: '/settings',  icon: Settings,        label: 'Param.' },
   ]
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 flex md:hidden">
+    <nav className="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 flex md:hidden">
       {mobileItems.map(({ to, icon: Icon, label }) => (
         <NavLink
           key={to}
