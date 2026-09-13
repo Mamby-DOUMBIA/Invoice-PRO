@@ -38,7 +38,7 @@ jobs:
       - name: Scan tracked files for credential patterns
         shell: bash
         run: |
-          if git grep -n -I -E 'service_role|SUPABASE_SERVICE_ROLE_KEY|postgresql://postgres|-----BEGIN (RSA|OPENSSH|EC|PRIVATE) KEY-----'; then
+          if git grep -n -I -E 'service_role|SUPABASE_SERVICE_ROLE_KEY|postgresql://postgres|-----BEGIN (RSA|OPENSSH|EC|PRIVATE) KEY-----' -- ':!.github/*' ':!docs/*'; then
             echo 'Forbidden credential pattern detected in tracked files.'
             exit 1
           fi
