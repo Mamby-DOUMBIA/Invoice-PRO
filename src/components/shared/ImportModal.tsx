@@ -3,6 +3,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Upload, FileSpreadsheet, CheckCircle2, AlertTriangle } from 'lucide-react'
 import toast from 'react-hot-toast'
+import * as XLSX from 'xlsx'
 
 interface ImportModalProps {
   open: boolean
@@ -21,7 +22,87 @@ export function ImportModal({ open, onClose, type, onImport }: ImportModalProps)
     const selected = e.target.files?.[0]
     if (!selected) return
     setFile(selected)
-    parseCSV(selected)
+    const ext = selected.name.split('.').pop()?.toLowerCase()
+    if (ext === 'xlsx' || ext === 'xls') {
+      parseXLSX(selected)
+    } else {
+      parseCSV(selected)
+    }
+  }
+
+  function parseXLSX(f: File) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const buffer = e.target?.result as ArrayBuffer
+        const workbook = XLSX.read(buffer, { type: 'array' })
+        const firstSheetName = workbook.SheetNames[0]
+        if (!firstSheetName) {
+          toast.error('Le fichier Excel est vide.')
+          return
+        }
+        const worksheet = workbook.Sheets[firstSheetName]
+        const rawJson: Record<string, any>[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' })
+        if (!rawJson || rawJson.length === 0) {
+          toast.error('Aucune ligne trouvée dans le fichier Excel.')
+          return
+        }
+
+        const data: any[] = []
+        for (const item of rawJson) {
+          const row: Record<string, any> = {}
+          for (const [k, v] of Object.entries(item)) {
+            row[k.trim().toLowerCase()] = v
+          }
+
+          if (type === 'clients') {
+            const name = String(row['nom'] || row['name'] || row['client'] || '').trim()
+            if (name) {
+              data.push({
+                name,
+                company_name: row['société'] || row['societe'] || row['company_name'] || row['entreprise'] || null,
+                email: row['email'] || row['courriel'] || null,
+                phone: row['téléphone'] || row['telephone'] || row['phone'] ? String(row['téléphone'] || row['telephone'] || row['phone']) : null,
+                whatsapp: row['whatsapp'] ? String(row['whatsapp']) : null,
+                address: row['adresse'] || row['address'] || null,
+                city: row['ville'] || row['city'] || null,
+                country: row['pays'] || row['country'] || 'ML',
+                nif: row['nif'] ? String(row['nif']) : null,
+                notes: row['notes'] || null,
+                is_active: true,
+              })
+            }
+          } else if (type === 'products') {
+            const name = String(row['désignation'] || row['designation'] || row['nom'] || row['name'] || '').trim()
+            if (name) {
+              const rawPrice = String(row['prix ht'] || row['prix'] || row['price_ht'] || '0').replace(',', '.')
+              const rawTax = String(row['tva (%)'] || row['taux tva (%)'] || row['tva'] || row['tax_rate'] || '18').replace(',', '.')
+              data.push({
+                name,
+                sku: row['référence/sku'] || row['référence'] || row['reference'] || row['sku'] || row['ref'] || null,
+                type: String(row['type'] || '').toLowerCase().includes('serv') ? 'service' : 'product',
+                price_ht: parseFloat(rawPrice) || 0,
+                tax_rate: parseFloat(rawTax) || 18,
+                unit: row['unité'] || row['unite'] || row['unit'] || 'unité',
+                description: row['description'] || null,
+                is_active: true,
+              })
+            }
+          }
+        }
+
+        setParsedRows(data)
+        if (data.length > 0) {
+          toast.success(`${data.length} élément(s) détecté(s) dans le fichier Excel.`)
+        } else {
+          toast.error('Aucune ligne valide trouvée dans le fichier Excel.')
+        }
+      } catch (err: any) {
+        console.error(err)
+        toast.error('Impossible de lire le fichier Excel.')
+      }
+    }
+    reader.readAsArrayBuffer(f)
   }
 
   function parseCSV(f: File) {
@@ -74,10 +155,10 @@ export function ImportModal({ open, onClose, type, onImport }: ImportModalProps)
           const name = row['désignation'] || row['designation'] || row['nom'] || row['name']
           if (name) {
             const rawPrice = (row['prix ht'] || row['prix'] || row['price_ht'] || '0').replace(',', '.')
-            const rawTax = (row['taux tva (%)'] || row['tva'] || row['tax_rate'] || '18').replace(',', '.')
+            const rawTax = (row['taux tva (%)'] || row['tva (%)'] || row['tva'] || row['tax_rate'] || '18').replace(',', '.')
             data.push({
               name,
-              sku: row['référence/sku'] || row['sku'] || row['ref'] || row['reference'] || null,
+              sku: row['référence/sku'] || row['référence'] || row['sku'] || row['ref'] || row['reference'] || null,
               type: (row['type'] || '').toLowerCase().includes('serv') ? 'service' : 'product',
               price_ht: parseFloat(rawPrice) || 0,
               tax_rate: parseFloat(rawTax) || 18,
@@ -93,7 +174,7 @@ export function ImportModal({ open, onClose, type, onImport }: ImportModalProps)
       if (data.length > 0) {
         toast.success(`${data.length} élément(s) détecté(s) dans le fichier.`)
       } else {
-        toast.error('Aucune ligne valide trouvée. Vérifiez les entêtes du fichier CSV.')
+        toast.error('Aucune ligne valide trouvée. Vérifiez les entêtes du fichier.')
       }
     }
     reader.readAsText(f, 'UTF-8')
@@ -119,10 +200,10 @@ export function ImportModal({ open, onClose, type, onImport }: ImportModalProps)
         <div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <FileSpreadsheet className="w-5 h-5 text-blue-600" />
-            Importer des {type === 'clients' ? 'clients' : 'produits et services'} (CSV)
+            Importer des {type === 'clients' ? 'clients' : 'produits et services'} (Excel / CSV)
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Sélectionnez un fichier .csv contenant vos données exportées depuis Excel ou un autre logiciel.
+            Sélectionnez un fichier Excel (.xlsx, .xls) ou un fichier CSV contenant vos données.
           </p>
         </div>
 
@@ -134,18 +215,19 @@ export function ImportModal({ open, onClose, type, onImport }: ImportModalProps)
           <Upload className="w-8 h-8 text-slate-400" />
           <div className="text-center">
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              {file ? file.name : 'Cliquez pour sélectionner un fichier CSV'}
+              {file ? file.name : 'Cliquez pour sélectionner un fichier Excel (.xlsx) ou CSV'}
             </p>
-            <p className="text-xs text-slate-400 mt-1">Fichier délimité par des virgules ou points-virgules</p>
+            <p className="text-xs text-slate-400 mt-1">Fichiers supportés : .xlsx, .xls, .csv</p>
           </div>
           <input
             ref={fileInputRef}
             type="file"
-            accept=".csv"
+            accept=".xlsx,.xls,.csv"
             onChange={handleFileChange}
             className="hidden"
           />
         </div>
+
 
         {/* Preview of rows */}
         {parsedRows.length > 0 && (

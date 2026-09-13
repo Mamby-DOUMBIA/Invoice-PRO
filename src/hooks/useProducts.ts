@@ -83,6 +83,30 @@ export function useDeleteProduct() {
   })
 }
 
+export function useClearAllProducts() {
+  const qc = useQueryClient()
+  const org = useCurrentOrg()
+  return useMutation({
+    mutationFn: async () => {
+      if (!org?.id) throw new Error('Aucune organisation sélectionnée')
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('organization_id', org.id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['products'] })
+      qc.invalidateQueries({ queryKey: ['subscription-usage'] })
+      toast.success('Tous les produits et services ont été supprimés')
+    },
+    onError: (err: any) => {
+      console.error(err)
+      toast.error(err?.message || 'Impossible de vider les produits/services')
+    },
+  })
+}
+
 export function useCreateCategory() {
   const qc = useQueryClient()
   const org = useCurrentOrg()
@@ -90,11 +114,19 @@ export function useCreateCategory() {
     mutationFn: async (name: string) => {
       const { data, error } = await supabase
         .from('product_categories')
-        .insert({ organization_id: org!.id, name })
+        .insert({ organization_id: org!.id, name: name.trim() })
         .select().single()
       if (error) throw error
       return data as ProductCategory
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['product-categories'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['product-categories'] })
+      toast.success('Catégorie ajoutée avec succès')
+    },
+    onError: (err: any) => {
+      console.error(err)
+      toast.error(err?.message || 'Erreur lors de la création de la catégorie')
+    },
   })
 }
+

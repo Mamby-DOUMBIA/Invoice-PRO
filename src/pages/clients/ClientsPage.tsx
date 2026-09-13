@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Users, Search, Plus, Pencil, Trash2, Eye, Download, Upload } from 'lucide-react'
-import { useClients, useCreateClient, useUpdateClient, useDeleteClient } from '@/hooks/useClients'
+import { Users, Search, Plus, Pencil, Trash2, Eye, Download, Upload, FileSpreadsheet } from 'lucide-react'
+import { useClients, useCreateClient, useUpdateClient, useDeleteClient, useClearAllClients } from '@/hooks/useClients'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
@@ -11,7 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Badge } from '@/components/ui/Badge'
 import { ClientForm } from './ClientForm'
 import { ImportModal } from '@/components/shared/ImportModal'
-import { exportClientsToCSV } from '@/utils/export'
+import { exportClientsToCSV, downloadClientTemplateXLSX } from '@/utils/export'
 import type { Client } from '@/types/database'
 import { useCurrentOrg } from '@/hooks/useAuth'
 import { ClientDetailDrawer } from './ClientDetailDrawer'
@@ -22,6 +22,7 @@ export function ClientsPage() {
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [showImport, setShowImport] = useState(false)
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [editing, setEditing] = useState<Client | null>(null)
   const [deleting, setDeleting] = useState<Client | null>(null)
   const [viewing, setViewing] = useState<Client | null>(null)
@@ -30,8 +31,10 @@ export function ClientsPage() {
   const createClient = useCreateClient()
   const updateClient = useUpdateClient()
   const deleteClient = useDeleteClient()
+  const clearAllClients = useClearAllClients()
 
   const currency = org?.currency ?? 'XOF'
+
 
   const columns = [
     {
@@ -95,7 +98,22 @@ export function ClientsPage() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Clients</h1>
           <p className="text-sm text-slate-400 mt-0.5">{clients.length} client{clients.length !== 1 ? 's' : ''}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="secondary"
+            icon={<FileSpreadsheet className="w-4 h-4 text-emerald-600" />}
+            onClick={() => downloadClientTemplateXLSX()}
+            title="Télécharger le modèle Excel .xlsx pour l'import de clients"
+          >
+            Télécharger Format
+          </Button>
+          <Button
+            variant="secondary"
+            icon={<Upload className="w-4 h-4" />}
+            onClick={() => setShowImport(true)}
+          >
+            Importer
+          </Button>
           {clients.length > 0 && (
             <Button
               variant="secondary"
@@ -105,13 +123,16 @@ export function ClientsPage() {
               Exporter CSV
             </Button>
           )}
-          <Button
-            variant="secondary"
-            icon={<Upload className="w-4 h-4" />}
-            onClick={() => setShowImport(true)}
-          >
-            Importer CSV
-          </Button>
+          {clients.length > 0 && (
+            <Button
+              variant="danger"
+              icon={<Trash2 className="w-4 h-4" />}
+              onClick={() => setShowClearConfirm(true)}
+              title="Supprimer définitivement tous les clients"
+            >
+              Vider les entrées
+            </Button>
+          )}
           <Button icon={<Plus className="w-4 h-4" />} onClick={() => { setEditing(null); setShowForm(true) }}>
             Nouveau client
           </Button>
@@ -166,7 +187,7 @@ export function ClientsPage() {
         />
       </Modal>
 
-      {/* Delete confirm */}
+      {/* Delete single client confirm */}
       <ConfirmModal
         open={!!deleting}
         onClose={() => setDeleting(null)}
@@ -181,6 +202,20 @@ export function ClientsPage() {
         loading={deleteClient.isPending}
       />
 
+      {/* Clear all clients confirm */}
+      <ConfirmModal
+        open={showClearConfirm}
+        onClose={() => setShowClearConfirm(false)}
+        onConfirm={async () => {
+          await clearAllClients.mutateAsync()
+          setShowClearConfirm(false)
+        }}
+        title="Vider tous les clients"
+        message="Êtes-vous sûr de vouloir supprimer définitivement TOUS les clients ? Cette action est irréversible et supprimera l'ensemble de votre base clients."
+        confirmLabel="Oui, tout supprimer"
+        loading={clearAllClients.isPending}
+      />
+
       {/* Detail drawer */}
       {viewing && (
         <ClientDetailDrawer
@@ -191,7 +226,7 @@ export function ClientsPage() {
         />
       )}
 
-      {/* CSV Import Modal */}
+      {/* CSV / Excel Import Modal */}
       {showImport && (
         <ImportModal
           open={showImport}
@@ -206,6 +241,7 @@ export function ClientsPage() {
             const { error } = await supabase.from('clients').insert(rows)
             if (error) throw error
             await queryClient.invalidateQueries({ queryKey: ['clients'] })
+            await queryClient.invalidateQueries({ queryKey: ['subscription-usage'] })
           }}
         />
       )}

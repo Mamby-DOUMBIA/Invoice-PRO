@@ -1,6 +1,14 @@
 import { useState } from 'react'
-import { Package, Search, Plus, Pencil, Trash2, Download, Upload } from 'lucide-react'
-import { useProducts, useProductCategories, useCreateProduct, useUpdateProduct, useDeleteProduct } from '@/hooks/useProducts'
+import { Package, Search, Plus, Pencil, Trash2, Download, Upload, FileSpreadsheet, FolderPlus } from 'lucide-react'
+import {
+  useProducts,
+  useProductCategories,
+  useCreateProduct,
+  useUpdateProduct,
+  useDeleteProduct,
+  useClearAllProducts,
+  useCreateCategory,
+} from '@/hooks/useProducts'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
@@ -12,7 +20,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Badge } from '@/components/ui/Badge'
 import { ProductForm } from './ProductForm'
 import { ImportModal } from '@/components/shared/ImportModal'
-import { exportProductsToCSV } from '@/utils/export'
+import { exportProductsToCSV, downloadProductTemplateXLSX } from '@/utils/export'
 import type { Product } from '@/types/database'
 import { formatCurrency } from '@/utils/format'
 import { useCurrentOrg } from '@/hooks/useAuth'
@@ -24,6 +32,9 @@ export function ProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [showImport, setShowImport] = useState(false)
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [showCategoryModal, setShowCategoryModal] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
   const [editing, setEditing] = useState<Product | null>(null)
   const [deleting, setDeleting] = useState<Product | null>(null)
 
@@ -32,8 +43,11 @@ export function ProductsPage() {
   const createProduct = useCreateProduct()
   const updateProduct = useUpdateProduct()
   const deleteProduct = useDeleteProduct()
+  const clearAllProducts = useClearAllProducts()
+  const createCategory = useCreateCategory()
 
   const currency = org?.currency ?? 'XOF'
+
 
   const columns = [
     {
@@ -100,7 +114,32 @@ export function ProductsPage() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Produits & Services</h1>
           <p className="text-sm text-slate-400 mt-0.5">{products.length} article{products.length !== 1 ? 's' : ''}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="secondary"
+            icon={<FileSpreadsheet className="w-4 h-4 text-emerald-600" />}
+            onClick={() => downloadProductTemplateXLSX()}
+            title="Télécharger le modèle Excel .xlsx pour l'import de produits/services"
+          >
+            Télécharger Format
+          </Button>
+          <Button
+            variant="secondary"
+            icon={<FolderPlus className="w-4 h-4 text-indigo-600" />}
+            onClick={() => {
+              setNewCategoryName('')
+              setShowCategoryModal(true)
+            }}
+          >
+            Ajouter Catégorie
+          </Button>
+          <Button
+            variant="secondary"
+            icon={<Upload className="w-4 h-4" />}
+            onClick={() => setShowImport(true)}
+          >
+            Importer
+          </Button>
           {products.length > 0 && (
             <Button
               variant="secondary"
@@ -110,13 +149,16 @@ export function ProductsPage() {
               Exporter CSV
             </Button>
           )}
-          <Button
-            variant="secondary"
-            icon={<Upload className="w-4 h-4" />}
-            onClick={() => setShowImport(true)}
-          >
-            Importer CSV
-          </Button>
+          {products.length > 0 && (
+            <Button
+              variant="danger"
+              icon={<Trash2 className="w-4 h-4" />}
+              onClick={() => setShowClearConfirm(true)}
+              title="Supprimer définitivement tous les produits et services"
+            >
+              Vider les entrées
+            </Button>
+          )}
           <Button icon={<Plus className="w-4 h-4" />} onClick={() => { setEditing(null); setShowForm(true) }}>
             Nouveau produit
           </Button>
@@ -170,6 +212,7 @@ export function ProductsPage() {
         />
       </Modal>
 
+      {/* Delete Single Product Confirm */}
       <ConfirmModal
         open={!!deleting}
         onClose={() => setDeleting(null)}
@@ -179,7 +222,71 @@ export function ProductsPage() {
         loading={deleteProduct.isPending}
       />
 
-      {/* CSV Import Modal */}
+      {/* Clear All Products Confirm */}
+      <ConfirmModal
+        open={showClearConfirm}
+        onClose={() => setShowClearConfirm(false)}
+        onConfirm={async () => {
+          await clearAllProducts.mutateAsync()
+          setShowClearConfirm(false)
+        }}
+        title="Vider tous les produits et services"
+        message="Êtes-vous sûr de vouloir supprimer définitivement TOUS les produits et services du catalogue ? Cette action est irréversible et réinitialisera votre catalogue."
+        confirmLabel="Oui, tout supprimer"
+        loading={clearAllProducts.isPending}
+      />
+
+      {/* Create Category Modal */}
+      <Modal
+        open={showCategoryModal}
+        onClose={() => {
+          setShowCategoryModal(false)
+          setNewCategoryName('')
+        }}
+        title="Ajouter une nouvelle catégorie"
+        size="sm"
+      >
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault()
+            if (!newCategoryName.trim()) return
+            await createCategory.mutateAsync(newCategoryName.trim())
+            setNewCategoryName('')
+            setShowCategoryModal(false)
+          }}
+          className="space-y-4"
+        >
+          <Input
+            label="Nom de la catégorie"
+            placeholder="Ex: Matériel informatique, Consulting, Formation..."
+            value={newCategoryName}
+            onChange={(e) => setNewCategoryName(e.target.value)}
+            required
+            autoFocus
+          />
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setShowCategoryModal(false)
+                setNewCategoryName('')
+              }}
+            >
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              loading={createCategory.isPending}
+              disabled={!newCategoryName.trim()}
+            >
+              Créer la catégorie
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* CSV / Excel Import Modal */}
       {showImport && (
         <ImportModal
           open={showImport}
@@ -194,6 +301,7 @@ export function ProductsPage() {
             const { error } = await supabase.from('products').insert(rows)
             if (error) throw error
             await queryClient.invalidateQueries({ queryKey: ['products'] })
+            await queryClient.invalidateQueries({ queryKey: ['subscription-usage'] })
           }}
         />
       )}

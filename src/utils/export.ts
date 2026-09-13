@@ -1,6 +1,85 @@
+import * as XLSX from 'xlsx'
+
 /**
- * Utility functions for exporting data to Excel-compatible CSV (with UTF-8 BOM)
+ * Utility functions for exporting data to Excel-compatible CSV (with UTF-8 BOM) or Excel (.xlsx)
  */
+
+export function downloadXLSX(
+  filename: string,
+  sheetName: string,
+  headers: string[],
+  rows: (string | number | null | undefined)[][],
+  columnWidths?: number[]
+) {
+  const data = [headers, ...rows]
+  const ws = XLSX.utils.aoa_to_sheet(data)
+  if (columnWidths && columnWidths.length > 0) {
+    ws['!cols'] = columnWidths.map(w => ({ wch: w }))
+  }
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0, 31))
+  XLSX.writeFile(wb, filename.endsWith('.xlsx') ? filename : `${filename}.xlsx`)
+}
+
+export function downloadProductTemplateXLSX() {
+  const headers = [
+    'Désignation',
+    'Type (product ou service)',
+    'Prix HT',
+    'Unité',
+    'TVA (%)',
+    'Description',
+    'Catégorie',
+    'Référence/SKU',
+  ]
+
+  const sampleRows = [
+    ['Ordinateur Portable Pro 15"', 'product', 450000, 'pièce', 18, 'Intel i7, 16GB RAM, 512GB SSD', 'Informatique', 'LAP-001'],
+    ['Maintenance informatique mensuelle', 'service', 75000, 'mois', 18, 'Support technique et téléassistance', 'Services IT', 'SRV-MAIN-01'],
+    ['Formation Utilisateur', 'service', 150000, 'jour', 0, 'Session de formation complète 1 jour', 'Formation', 'SRV-FORM-01'],
+  ]
+
+  const widths = [30, 25, 15, 12, 12, 35, 20, 18]
+
+  downloadXLSX(
+    `modele_import_produits_services.xlsx`,
+    'Produits_Services',
+    headers,
+    sampleRows,
+    widths
+  )
+}
+
+export function downloadClientTemplateXLSX() {
+  const headers = [
+    'Nom',
+    'Société',
+    'Email',
+    'Téléphone',
+    'WhatsApp',
+    'Adresse',
+    'Ville',
+    'Pays',
+    'NIF',
+    'Notes',
+  ]
+
+  const sampleRows = [
+    ['Alpha Diallo', 'Société Malienne d\'Énergie (SME)', 'contact@sme-mali.com', '+223 70 00 00 00', '+223 70 00 00 00', 'Hamdallaye ACI 2000', 'Bamako', 'Mali', '081234567M', 'Client grand compte'],
+    ['Fanta Koné', '', 'fanta.kone@gmail.com', '+223 66 11 22 33', '+223 66 11 22 33', 'Badalabougou', 'Bamako', 'Mali', '', 'Particulier'],
+  ]
+
+  const widths = [25, 30, 28, 18, 18, 25, 15, 15, 18, 25]
+
+  downloadXLSX(
+    `modele_import_clients.xlsx`,
+    'Clients',
+    headers,
+    sampleRows,
+    widths
+  )
+}
+
 
 export function downloadCSV(filename: string, headers: string[], rows: (string | number | null | undefined)[][]) {
   const escapeCell = (cell: string | number | null | undefined): string => {

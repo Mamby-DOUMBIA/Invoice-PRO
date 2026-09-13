@@ -88,3 +88,28 @@ export function useDeleteClient() {
     onError: () => toast.error('Impossible de supprimer ce client'),
   })
 }
+
+export function useClearAllClients() {
+  const qc = useQueryClient()
+  const org = useCurrentOrg()
+  return useMutation({
+    mutationFn: async () => {
+      if (!org?.id) throw new Error('Aucune organisation sélectionnée')
+      const { error } = await supabase.from('clients').delete().eq('organization_id', org.id)
+      if (error) throw error
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['clients'] }),
+        qc.invalidateQueries({ queryKey: ['subscription-usage'] }),
+        invalidateDerivedData(qc),
+      ])
+      toast.success('Tous les clients ont été supprimés')
+    },
+    onError: (err: any) => {
+      console.error(err)
+      toast.error(err?.message || 'Impossible de vider la liste des clients. Certains clients sont peut-être liés à des factures.')
+    },
+  })
+}
+
