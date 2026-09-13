@@ -3,6 +3,8 @@ import { Outlet } from 'react-router-dom'
 import { Sidebar, BottomNav, FABMenu } from './Sidebar'
 import { cn } from '@/utils/cn'
 import { Toaster } from 'react-hot-toast'
+import { useOnlineStatus } from '@/hooks/useOnlineStatus'
+import { WifiOff } from 'lucide-react'
 
 export function AppLayout() {
   const [collapsed, setCollapsed] = useState(() =>
@@ -12,6 +14,7 @@ export function AppLayout() {
     localStorage.getItem('invoicepro_theme') === 'dark' ||
     window.matchMedia('(prefers-color-scheme: dark)').matches
   )
+  const isOnline = useOnlineStatus()
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode)
@@ -43,6 +46,12 @@ export function AppLayout() {
         collapsed ? 'md:ml-16' : 'md:ml-60',
         'pb-20 md:pb-0'
       )}>
+        {!isOnline && (
+          <div className="bg-amber-500 text-white px-4 py-2 text-xs font-semibold flex items-center justify-center gap-2 shadow-sm">
+            <WifiOff className="w-4 h-4 animate-pulse" />
+            <span>Mode hors-ligne actif — Vos modifications seront synchronisées dès le retour du réseau.</span>
+          </div>
+        )}
         <div className="app-page-enter min-h-full p-4 md:p-7 lg:p-10 max-w-[1600px] mx-auto">
           <Outlet />
         </div>

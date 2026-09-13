@@ -76,30 +76,39 @@ export function OnboardingPage() {
   }
 
   async function onSubmit(data: FormData) {
-    if (!user) return
+    if (!user) {
+      toast.error('Votre session a expiré. Veuillez vous reconnecter.')
+      navigate('/auth/login', { replace: true })
+      return
+    }
     setSaving(true)
     try {
-      // 1. Créer l'organisation
-      const { data: org, error: orgErr } = await supabase
-        .from('organizations')
-        .insert({
-          name: data.name,
-          address: data.address || null,
-          city: data.city || null,
-          country: data.country || 'ML',
-          phone: data.phone || null,
-          email: data.email || null,
-          website: data.website || null,
-          nif: data.nif || null,
-          tax_regime: data.tax_regime || null,
-          currency: data.currency,
-          default_vat: data.default_vat,
-          onboarding_completed: true,
-        })
-        .select()
-        .single()
+      // The database function creates the workspace and every required default
+      // record atomically, then returns the organisation for the dashboard route.
+      const { data: org, error: orgErr } = await supabase.rpc('create_organization_onboarding', {
+        p_name: data.name,
+        p_address: data.address || null,
+        p_city: data.city || null,
+        p_country: data.country || 'ML',
+        p_phone: data.phone || null,
+        p_email: data.email || null,
+        p_website: data.website || null,
+        p_nif: data.nif || null,
+        p_tax_regime: data.tax_regime || null,
+        p_currency: data.currency,
+        p_default_vat: data.default_vat,
+        p_invoice_prefix: data.invoice_prefix,
+        p_quote_prefix: data.quote_prefix,
+        p_receipt_prefix: data.receipt_prefix,
+        p_po_prefix: data.po_prefix,
+      })
 
       if (orgErr || !org) throw orgErr || new Error('Création organisation échouée')
+
+      setOrganization(org)
+      setRole('owner')
+      toast.success('Entreprise configurée !')
+      navigate('/dashboard', { replace: true })
 
       // 2. Upload logo
       if (logoFile) {
@@ -114,46 +123,10 @@ export function OnboardingPage() {
         }
       }
 
-      // 3. Membre owner
-      await supabase.from('organization_members').insert({
-        organization_id: org.id,
-        user_id: user.id,
-        role: 'owner',
-        accepted: true,
-      })
-
-      // 4. Séquences de numérotation
-      await supabase.from('document_sequences').insert([
-        { organization_id: org.id, type: 'invoice', prefix: data.invoice_prefix, include_year: true, padding: 4, reset_period: 'yearly' },
-        { organization_id: org.id, type: 'quote', prefix: data.quote_prefix, include_year: true, padding: 4, reset_period: 'yearly' },
-        { organization_id: org.id, type: 'receipt', prefix: data.receipt_prefix, include_year: true, padding: 4, reset_period: 'yearly' },
-        { organization_id: org.id, type: 'purchase_order', prefix: data.po_prefix, include_year: true, padding: 4, reset_period: 'yearly' },
-      ])
-
-      // 5. Taxe par défaut
-      if (data.default_vat > 0) {
-        await supabase.from('taxes').insert({
-          organization_id: org.id,
-          name: `TVA ${data.default_vat}%`,
-          rate: data.default_vat,
-          is_default: true,
-        })
-      }
-
-      // 6. Abonnement free
-      await supabase.from('subscriptions').insert({
-        organization_id: org.id,
-        plan: 'free',
-        status: 'active',
-      })
-
-      setOrganization(org)
-      setRole('owner')
-      toast.success('Entreprise configurée !')
-      navigate('/dashboard')
     } catch (err) {
       console.error(err)
-      toast.error('Erreur lors de la configuration.')
+      const message = err instanceof Error ? err.message : 'Erreur lors de la configuration.'
+      toast.error(message)
     } finally {
       setSaving(false)
     }

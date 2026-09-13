@@ -1,6 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 import type { PDFProps } from './shared'
-import { formatAmt, fmtDate } from './shared'
+import { formatAmt, fmtDate, getDocumentTitle } from './shared'
 
 const styles = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 9, color: '#1e293b', backgroundColor: '#ffffff' },
@@ -31,10 +31,11 @@ const styles = StyleSheet.create({
   tGrand: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#1e40af', padding: '7 8', borderRadius: 4, marginTop: 4 },
 })
 
-export function InvoicePDFModern({ invoice, org }: PDFProps) {
+export function InvoicePDFModern({ invoice, org, documentTitle }: PDFProps) {
   const client = invoice.clients as Record<string, string> | null
-  const items = invoice.invoice_items ?? []
+  const items = invoice.invoice_items ?? invoice.quote_items ?? invoice.purchase_order_items ?? invoice.items ?? []
   const curr = invoice.currency ?? org.currency ?? 'XOF'
+  const title = getDocumentTitle(invoice, documentTitle)
 
   return (
     <Document>
@@ -50,7 +51,7 @@ export function InvoicePDFModern({ invoice, org }: PDFProps) {
         </View>
 
         <View style={styles.main}>
-          <Text style={styles.docTitle}>FACTURE</Text>
+          <Text style={styles.docTitle}>{title}</Text>
           <Text style={styles.docNum}>{invoice.number}</Text>
 
           {/* Meta */}

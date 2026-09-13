@@ -60,7 +60,7 @@ export function useCreateQuote() {
   const qc = useQueryClient()
   const org = useCurrentOrg()
   return useMutation({
-    mutationFn: async ({ quote, items }: { quote: Omit<QuoteInsert, 'organization_id' | 'number' | 'subtotal_ht' | 'total_discount' | 'total_tax' | 'total_ttc'>; items: Omit<QuoteItemInsert, 'quote_id'>[] }) => {
+    mutationFn: async ({ quote, items }: { quote: any; items: any[] }) => {
       const { data: numData } = await supabase.rpc('next_document_number', { p_org_id: org!.id, p_type: 'quote' })
       const totals = applyRounding(calcDocumentTotals(items), org!.currency)
       const { data: q, error } = await supabase
@@ -149,6 +149,40 @@ export function useConvertQuoteToInvoice() {
   })
 }
 
+export function useUpdateQuote() {
+  const qc = useQueryClient()
+  const org = useCurrentOrg()
+  return useMutation({
+    mutationFn: async ({ id, quote, items }: { id: string; quote: any; items: any[] }) => {
+      const totals = applyRounding(calcDocumentTotals(items), org?.currency ?? 'XOF')
+      const { data: q, error } = await supabase
+        .from('quotes')
+        .update({ ...quote, ...totals })
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+
+      await supabase.from('quote_items').delete().eq('quote_id', id)
+      const lineItems = items.map((item, i) => {
+        const { line_ht, line_tax, line_ttc } = calcLine(item)
+        return { ...item, quote_id: id, line_ht, line_tax, line_ttc, position: i }
+      })
+      await supabase.from('quote_items').insert(lineItems)
+      return q as Quote
+    },
+    onSuccess: async (_, v) => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['quotes'] }),
+        qc.invalidateQueries({ queryKey: ['quote', v.id] }),
+        invalidateDerivedData(qc),
+      ])
+      toast.success('Devis mis à jour')
+    },
+    onError: () => toast.error('Erreur lors de la mise à jour'),
+  })
+}
+
 export function useDeleteQuote() {
   const qc = useQueryClient()
   return useMutation({
@@ -156,3 +190,4 @@ export function useDeleteQuote() {
     onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['quotes'] }), invalidateDerivedData(qc)]); toast.success('Devis supprimé') },
   })
 }
+

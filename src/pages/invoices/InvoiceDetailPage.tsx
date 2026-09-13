@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Pencil, Share2, DollarSign, ArrowLeft, FileText } from 'lucide-react'
+import { Pencil, Share2, DollarSign, ArrowLeft, FileText, BellRing } from 'lucide-react'
 import { useInvoice } from '@/hooks/useInvoices'
 import { usePayments, useCreatePayment } from '@/hooks/usePayments'
 import { Button } from '@/components/ui/Button'
@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
 import { PaymentForm } from '../payments/PaymentForm'
 import { ShareModal } from '@/components/shared/ShareModal'
+import { ReminderModal } from '@/components/shared/ReminderModal'
 import { InvoicePDFViewer } from '@/components/pdf/InvoicePDFViewer'
 import { formatCurrency, formatDate } from '@/utils/format'
 import { useCurrentOrg } from '@/hooks/useAuth'
@@ -22,6 +23,7 @@ export function InvoiceDetailPage() {
   const [showPayment, setShowPayment] = useState(false)
   const [showShare, setShowShare] = useState(false)
   const [showPDF, setShowPDF] = useState(false)
+  const [showReminder, setShowReminder] = useState(false)
 
   const { data: invoice, isLoading } = useInvoice(id)
   const { data: payments = [] } = usePayments(id)
@@ -58,14 +60,25 @@ export function InvoiceDetailPage() {
 
         <div className="flex flex-wrap gap-2">
           {invoice.status !== 'cancelled' && invoice.status !== 'paid' && (
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={<DollarSign className="w-4 h-4" />}
-              onClick={() => setShowPayment(true)}
-            >
-              Paiement
-            </Button>
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<DollarSign className="w-4 h-4" />}
+                onClick={() => setShowPayment(true)}
+              >
+                Paiement
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                icon={<BellRing className="w-4 h-4" />}
+                onClick={() => setShowReminder(true)}
+              >
+                Relancer
+              </Button>
+            </>
           )}
           <Button
             variant="secondary"
@@ -290,6 +303,14 @@ export function InvoiceDetailPage() {
             org={org!}
           />
         </Modal>
+      )}
+
+      {showReminder && (
+        <ReminderModal
+          open={showReminder}
+          onClose={() => setShowReminder(false)}
+          invoice={invoice as any}
+        />
       )}
     </div>
   )

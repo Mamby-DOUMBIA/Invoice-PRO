@@ -20,9 +20,12 @@ const InvoicesPage       = lazy(() => import('@/pages/invoices/InvoicesPage').th
 const InvoiceFormPage    = lazy(() => import('@/pages/invoices/InvoiceFormPage').then(m => ({ default: m.InvoiceFormPage })))
 const InvoiceDetailPage  = lazy(() => import('@/pages/invoices/InvoiceDetailPage').then(m => ({ default: m.InvoiceDetailPage })))
 const QuotesPage         = lazy(() => import('@/pages/quotes/QuotesPage').then(m => ({ default: m.QuotesPage })))
+const QuoteFormPage      = lazy(() => import('@/pages/quotes/QuoteFormPage').then(m => ({ default: m.QuoteFormPage })))
+const QuoteDetailPage    = lazy(() => import('@/pages/quotes/QuoteDetailPage').then(m => ({ default: m.QuoteDetailPage })))
 const ReceiptsPage       = lazy(() => import('@/pages/receipts/ReceiptsPage').then(m => ({ default: m.ReceiptsPage })))
 const PurchaseOrdersPage = lazy(() => import('@/pages/purchase-orders/PurchaseOrdersPage').then(m => ({ default: m.PurchaseOrdersPage })))
 const PurchaseOrderFormPage = lazy(() => import('@/pages/purchase-orders/PurchaseOrderFormPage').then(m => ({ default: m.PurchaseOrderFormPage })))
+const PurchaseOrderDetailPage = lazy(() => import('@/pages/purchase-orders/PurchaseOrderDetailPage').then(m => ({ default: m.PurchaseOrderDetailPage })))
 const ClientsPage        = lazy(() => import('@/pages/clients/ClientsPage').then(m => ({ default: m.ClientsPage })))
 const ProductsPage       = lazy(() => import('@/pages/products/ProductsPage').then(m => ({ default: m.ProductsPage })))
 const PaymentsPage       = lazy(() => import('@/pages/payments/PaymentsPage').then(m => ({ default: m.PaymentsPage })))
@@ -124,13 +127,22 @@ export default function App() {
               <Route path="/quotes"
                 element={<Suspense fallback={<Fallback />}><QuotesPage /></Suspense>} />
               <Route path="/quotes/new"
-                element={<Suspense fallback={<Fallback />}><InvoiceFormPage /></Suspense>} />
+                element={<Suspense fallback={<Fallback />}><QuoteFormPage /></Suspense>} />
+              <Route path="/quotes/:id"
+                element={<Suspense fallback={<Fallback />}><QuoteDetailPage /></Suspense>} />
+              <Route path="/quotes/:id/edit"
+                element={<Suspense fallback={<Fallback />}><QuoteFormPage /></Suspense>} />
 
               <Route path="/receipts"
                 element={<Suspense fallback={<Fallback />}><ReceiptsPage /></Suspense>} />
+
               <Route path="/purchase-orders"
                 element={<Suspense fallback={<Fallback />}><PurchaseOrdersPage /></Suspense>} />
               <Route path="/purchase-orders/new"
+                element={<Suspense fallback={<Fallback />}><PurchaseOrderFormPage /></Suspense>} />
+              <Route path="/purchase-orders/:id"
+                element={<Suspense fallback={<Fallback />}><PurchaseOrderDetailPage /></Suspense>} />
+              <Route path="/purchase-orders/:id/edit"
                 element={<Suspense fallback={<Fallback />}><PurchaseOrderFormPage /></Suspense>} />
               <Route path="/clients"
                 element={<Suspense fallback={<Fallback />}><ClientsPage /></Suspense>} />

@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { Users, Search, Plus, Pencil, Trash2, Eye } from 'lucide-react'
+import { Users, Search, Plus, Pencil, Trash2, Eye, Download, Upload } from 'lucide-react'
 import { useClients, useCreateClient, useUpdateClient, useDeleteClient } from '@/hooks/useClients'
+import { useQueryClient } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Table } from '@/components/ui/Table'
@@ -8,14 +10,18 @@ import { ConfirmModal, Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Badge } from '@/components/ui/Badge'
 import { ClientForm } from './ClientForm'
+import { ImportModal } from '@/components/shared/ImportModal'
+import { exportClientsToCSV } from '@/utils/export'
 import type { Client } from '@/types/database'
 import { useCurrentOrg } from '@/hooks/useAuth'
 import { ClientDetailDrawer } from './ClientDetailDrawer'
 
 export function ClientsPage() {
   const org = useCurrentOrg()
+  const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [editing, setEditing] = useState<Client | null>(null)
   const [deleting, setDeleting] = useState<Client | null>(null)
   const [viewing, setViewing] = useState<Client | null>(null)
@@ -89,9 +95,27 @@ export function ClientsPage() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Clients</h1>
           <p className="text-sm text-slate-400 mt-0.5">{clients.length} client{clients.length !== 1 ? 's' : ''}</p>
         </div>
-        <Button icon={<Plus className="w-4 h-4" />} onClick={() => { setEditing(null); setShowForm(true) }}>
-          Nouveau client
-        </Button>
+        <div className="flex items-center gap-2">
+          {clients.length > 0 && (
+            <Button
+              variant="secondary"
+              icon={<Download className="w-4 h-4" />}
+              onClick={() => exportClientsToCSV(clients)}
+            >
+              Exporter CSV
+            </Button>
+          )}
+          <Button
+            variant="secondary"
+            icon={<Upload className="w-4 h-4" />}
+            onClick={() => setShowImport(true)}
+          >
+            Importer CSV
+          </Button>
+          <Button icon={<Plus className="w-4 h-4" />} onClick={() => { setEditing(null); setShowForm(true) }}>
+            Nouveau client
+          </Button>
+        </div>
       </div>
 
       {/* Search */}
@@ -164,6 +188,25 @@ export function ClientsPage() {
           currency={currency}
           onClose={() => setViewing(null)}
           onEdit={() => { setEditing(viewing); setViewing(null); setShowForm(true) }}
+        />
+      )}
+
+      {/* CSV Import Modal */}
+      {showImport && (
+        <ImportModal
+          open={showImport}
+          onClose={() => setShowImport(false)}
+          type="clients"
+          onImport={async (items) => {
+            if (!org) return
+            const rows = items.map(c => ({
+              ...c,
+              organization_id: org.id,
+            }))
+            const { error } = await supabase.from('clients').insert(rows)
+            if (error) throw error
+            await queryClient.invalidateQueries({ queryKey: ['clients'] })
+          }}
         />
       )}
     </div>

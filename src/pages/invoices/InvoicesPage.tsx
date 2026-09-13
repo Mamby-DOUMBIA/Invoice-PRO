@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileText, Search, Plus, Pencil, Trash2, Eye, Copy, X } from 'lucide-react'
+import { FileText, Search, Plus, Pencil, Trash2, Eye, Copy, X, BellRing, Download } from 'lucide-react'
 import { useInvoices, useDeleteInvoice, useCancelInvoice } from '@/hooks/useInvoices'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -9,6 +9,8 @@ import { Table, Pagination } from '@/components/ui/Table'
 import { StatusBadge } from '@/components/ui/Badge'
 import { ConfirmModal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { ReminderModal } from '@/components/shared/ReminderModal'
+import { exportInvoicesToCSV } from '@/utils/export'
 import type { InvoiceWithClient } from '@/hooks/useInvoices'
 import type { DocumentStatus } from '@/types/database'
 import { formatCurrency, formatDate } from '@/utils/format'
@@ -33,6 +35,7 @@ export function InvoicesPage() {
   const [page, setPage] = useState(1)
   const [deleting, setDeleting] = useState<InvoiceWithClient | null>(null)
   const [cancelling, setCancelling] = useState<InvoiceWithClient | null>(null)
+  const [reminding, setReminding] = useState<InvoiceWithClient | null>(null)
 
   const { data, isLoading } = useInvoices({ search, status: status === 'all' ? undefined : status, page })
   const deleteInvoice = useDeleteInvoice()
@@ -99,6 +102,15 @@ export function InvoicesPage() {
       align: 'right' as const,
       render: (inv: InvoiceWithClient) => (
         <div className="flex items-center gap-0.5 justify-end">
+          {inv.amount_due > 0 && inv.status !== 'cancelled' && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setReminding(inv) }}
+              className="p-1.5 rounded-lg hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-colors"
+              title="Relancer le paiement"
+            >
+              <BellRing className="w-4 h-4" />
+            </button>
+          )}
           <button onClick={(e) => { e.stopPropagation(); navigate(`/invoices/${inv.id}`) }}
             className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors" title="Voir">
             <Eye className="w-4 h-4" />
@@ -133,9 +145,20 @@ export function InvoicesPage() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Factures</h1>
           <p className="text-sm text-slate-400 mt-0.5">{total} facture{total !== 1 ? 's' : ''}</p>
         </div>
-        <Button icon={<Plus className="w-4 h-4" />} onClick={() => navigate('/invoices/new')}>
-          Nouvelle facture
-        </Button>
+        <div className="flex items-center gap-2">
+          {invoices.length > 0 && (
+            <Button
+              variant="secondary"
+              icon={<Download className="w-4 h-4" />}
+              onClick={() => exportInvoicesToCSV(invoices, currency)}
+            >
+              Exporter CSV
+            </Button>
+          )}
+          <Button icon={<Plus className="w-4 h-4" />} onClick={() => navigate('/invoices/new')}>
+            Nouvelle facture
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-3">
@@ -190,6 +213,13 @@ export function InvoicesPage() {
         confirmLabel="Annuler la facture"
         loading={cancelInvoice.isPending}
       />
+      {reminding && (
+        <ReminderModal
+          open={!!reminding}
+          onClose={() => setReminding(null)}
+          invoice={reminding}
+        />
+      )}
     </div>
   )
 }

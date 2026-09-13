@@ -1,6 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer'
 import type { PDFProps } from './shared'
-import { formatAmt, fmtDate } from './shared'
+import { formatAmt, fmtDate, getDocumentTitle } from './shared'
 
 const styles = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 9, color: '#0f172a', backgroundColor: '#ffffff', padding: 40 },
@@ -38,10 +38,11 @@ const styles = StyleSheet.create({
   notesText: { fontSize: 8, color: '#475569', lineHeight: 1.5 },
 })
 
-export function InvoicePDFClassic({ invoice, org }: PDFProps) {
+export function InvoicePDFClassic({ invoice, org, documentTitle }: PDFProps) {
   const client = invoice.clients as Record<string, string> | null
-  const items = invoice.invoice_items ?? []
+  const items = invoice.invoice_items ?? invoice.quote_items ?? invoice.purchase_order_items ?? invoice.items ?? []
   const curr = invoice.currency ?? org.currency ?? 'XOF'
+  const title = getDocumentTitle(invoice, documentTitle)
 
   return (
     <Document>
@@ -61,11 +62,13 @@ export function InvoicePDFClassic({ invoice, org }: PDFProps) {
             {org.nif && <Text style={styles.orgInfo}>NIF: {org.nif}</Text>}
           </View>
           <View>
-            <Text style={styles.docTitle}>FACTURE</Text>
+            <Text style={styles.docTitle}>{title}</Text>
             <Text style={styles.docNumber}>{invoice.number}</Text>
             <Text style={styles.docMeta}>Date: {fmtDate(invoice.date)}</Text>
-            {invoice.due_date && <Text style={styles.docMeta}>Échéance: {fmtDate(invoice.due_date)}</Text>}
-            {invoice.reference && <Text style={styles.docMeta}>Réf: {invoice.reference}</Text>}
+            {invoice.expiry_date ? <Text style={styles.docMeta}>Expiration: {fmtDate(invoice.expiry_date)}</Text> : null}
+            {invoice.expected_date ? <Text style={styles.docMeta}>Date prévue: {fmtDate(invoice.expected_date)}</Text> : null}
+            {invoice.due_date ? <Text style={styles.docMeta}>Échéance: {fmtDate(invoice.due_date)}</Text> : null}
+            {invoice.reference ? <Text style={styles.docMeta}>Réf: {invoice.reference}</Text> : null}
           </View>
         </View>
 
@@ -116,10 +119,10 @@ export function InvoicePDFClassic({ invoice, org }: PDFProps) {
             <Text style={styles.totalLabel}>Sous-total HT</Text>
             <Text style={styles.totalValue}>{formatAmt(invoice.subtotal_ht, curr)}</Text>
           </View>
-          {invoice.total_discount > 0 && (
+          {(invoice.total_discount ?? 0) > 0 && (
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Remise</Text>
-              <Text style={[styles.totalValue, { color: '#ea580c' }]}>- {formatAmt(invoice.total_discount, curr)}</Text>
+              <Text style={[styles.totalValue, { color: '#ea580c' }]}>- {formatAmt(invoice.total_discount ?? 0, curr)}</Text>
             </View>
           )}
           <View style={styles.totalRow}>
@@ -130,16 +133,16 @@ export function InvoicePDFClassic({ invoice, org }: PDFProps) {
             <Text style={styles.totalLabelBig}>TOTAL TTC</Text>
             <Text style={styles.totalValueBig}>{formatAmt(invoice.total_ttc, curr)}</Text>
           </View>
-          {invoice.amount_paid > 0 && (
+          {(invoice.amount_paid ?? 0) > 0 && (
             <View style={[styles.totalRow, { marginTop: 4 }]}>
               <Text style={styles.totalLabel}>Payé</Text>
-              <Text style={[styles.totalValue, { color: '#16a34a' }]}>{formatAmt(invoice.amount_paid, curr)}</Text>
+              <Text style={[styles.totalValue, { color: '#16a34a' }]}>{formatAmt(invoice.amount_paid ?? 0, curr)}</Text>
             </View>
           )}
-          {invoice.amount_due > 0 && (
+          {(invoice.amount_due ?? 0) > 0 && (
             <View style={[styles.totalRow, { backgroundColor: '#fef3c7', padding: '4 6', borderRadius: 4 }]}>
               <Text style={[styles.totalLabel, { color: '#92400e' }]}>Reste à payer</Text>
-              <Text style={[styles.totalValue, { color: '#92400e' }]}>{formatAmt(invoice.amount_due, curr)}</Text>
+              <Text style={[styles.totalValue, { color: '#92400e' }]}>{formatAmt(invoice.amount_due ?? 0, curr)}</Text>
             </View>
           )}
         </View>

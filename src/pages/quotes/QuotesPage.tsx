@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileCheck, Search, Plus, Pencil, Trash2, RefreshCw, Eye } from 'lucide-react'
+import { FileCheck, Search, Plus, Pencil, Trash2, RefreshCw, Eye, Download } from 'lucide-react'
 import { useQuotes, useDeleteQuote, useConvertQuoteToInvoice, useUpdateQuoteStatus } from '@/hooks/useQuotes'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -9,6 +9,7 @@ import { Table, Pagination } from '@/components/ui/Table'
 import { StatusBadge } from '@/components/ui/Badge'
 import { ConfirmModal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { exportQuotesToCSV } from '@/utils/export'
 import type { QuoteWithClient } from '@/hooks/useQuotes'
 import type { DocumentStatus } from '@/types/database'
 import { formatCurrency, formatDate } from '@/utils/format'
@@ -80,9 +81,20 @@ export function QuotesPage() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Devis</h1>
           <p className="text-sm text-slate-400 mt-0.5">{total} devis</p>
         </div>
-        <Button icon={<Plus className="w-4 h-4" />} onClick={() => navigate('/quotes/new')}>
-          Nouveau devis
-        </Button>
+        <div className="flex items-center gap-2">
+          {quotes.length > 0 && (
+            <Button
+              variant="secondary"
+              icon={<Download className="w-4 h-4" />}
+              onClick={() => exportQuotesToCSV(quotes, currency)}
+            >
+              Exporter CSV
+            </Button>
+          )}
+          <Button icon={<Plus className="w-4 h-4" />} onClick={() => navigate('/quotes/new')}>
+            Nouveau devis
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-3">

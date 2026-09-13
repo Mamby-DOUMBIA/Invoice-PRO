@@ -14,14 +14,38 @@ const LazyModern    = lazy(() => import('./templates/InvoicePDFModern').then(m =
 const LazyMinimal   = lazy(() => import('./templates/InvoicePDFMinimal').then(m => ({ default: m.InvoicePDFMinimal })))
 const LazyCorporate = lazy(() => import('./templates/InvoicePDFCorporate').then(m => ({ default: m.InvoicePDFCorporate })))
 
-export interface InvoiceData extends Invoice {
-  invoice_items?: InvoiceItem[]
-  clients?: Record<string, string> | null
+export interface InvoiceData {
+  number: string
+  date: string
+  due_date?: string | null
+  expiry_date?: string | null
+  expected_date?: string | null
+  reference?: string | null
+  payment_terms?: string | null
+  notes?: string | null
+  conditions?: string | null
+  template?: string
+  currency?: string
+  subtotal_ht?: number
+  total_discount?: number
+  total_tax?: number
+  total_ttc?: number
+  amount_paid?: number
+  amount_due?: number
+  amount?: number
+  status?: string
+  method?: string
+  invoice_items?: any[]
+  quote_items?: any[]
+  purchase_order_items?: any[]
+  items?: any[]
+  clients?: Record<string, any> | null
 }
 
 interface Props {
   invoice: InvoiceData
   org: Organization
+  documentTitle?: string
 }
 
 function getTemplateName(invoice: InvoiceData) {
@@ -42,7 +66,7 @@ function PDFLoader() {
   )
 }
 
-export function InvoicePDFViewer({ invoice, org }: Props) {
+export function InvoicePDFViewer({ invoice, org, documentTitle }: Props) {
   const [loaded, setLoaded] = useState(false)
   const filename = `${invoice.number}.pdf`
   const TemplateComp = getTemplateName(invoice)
@@ -55,7 +79,7 @@ export function InvoicePDFViewer({ invoice, org }: Props) {
           <LazyPDFDownload
             document={
               <Suspense fallback={null}>
-                <TemplateComp invoice={invoice} org={org} />
+                <TemplateComp invoice={invoice} org={org} documentTitle={documentTitle} />
               </Suspense>
             }
             fileName={filename}
@@ -74,7 +98,7 @@ export function InvoicePDFViewer({ invoice, org }: Props) {
         <Suspense fallback={<PDFLoader />}>
           <LazyPDFViewer width="100%" height="100%">
             <Suspense fallback={null}>
-              <TemplateComp invoice={invoice} org={org} />
+              <TemplateComp invoice={invoice} org={org} documentTitle={documentTitle} />
             </Suspense>
           </LazyPDFViewer>
         </Suspense>

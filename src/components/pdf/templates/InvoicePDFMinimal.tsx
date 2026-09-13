@@ -1,6 +1,6 @@
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import type { PDFProps } from './shared'
-import { formatAmt, fmtDate } from './shared'
+import { formatAmt, fmtDate, getDocumentTitle } from './shared'
 
 const s = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 9, color: '#1e293b', padding: 50, backgroundColor: '#ffffff' },
@@ -23,10 +23,11 @@ const s = StyleSheet.create({
   total: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 2, borderTopColor: '#0f172a', paddingTop: 6, marginTop: 4 },
 })
 
-export function InvoicePDFMinimal({ invoice, org }: PDFProps) {
+export function InvoicePDFMinimal({ invoice, org, documentTitle }: PDFProps) {
   const client = invoice.clients as Record<string, string> | null
-  const items = invoice.invoice_items ?? []
+  const items = invoice.invoice_items ?? invoice.quote_items ?? invoice.purchase_order_items ?? invoice.items ?? []
   const curr = invoice.currency ?? org.currency ?? 'XOF'
+  const title = getDocumentTitle(invoice, documentTitle)
 
   return (
     <Document>
@@ -38,7 +39,7 @@ export function InvoicePDFMinimal({ invoice, org }: PDFProps) {
             {org.phone && <Text style={s.orgSub}>{org.phone}</Text>}
           </View>
           <View>
-            <Text style={s.title}>Facture</Text>
+            <Text style={s.title}>{title}</Text>
             <Text style={s.num}>{invoice.number}</Text>
             <Text style={s.date}>{fmtDate(invoice.date)}</Text>
           </View>

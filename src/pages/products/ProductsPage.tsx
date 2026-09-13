@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { Package, Search, Plus, Pencil, Trash2 } from 'lucide-react'
+import { Package, Search, Plus, Pencil, Trash2, Download, Upload } from 'lucide-react'
 import { useProducts, useProductCategories, useCreateProduct, useUpdateProduct, useDeleteProduct } from '@/hooks/useProducts'
+import { useQueryClient } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -9,15 +11,19 @@ import { Modal, ConfirmModal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Badge } from '@/components/ui/Badge'
 import { ProductForm } from './ProductForm'
+import { ImportModal } from '@/components/shared/ImportModal'
+import { exportProductsToCSV } from '@/utils/export'
 import type { Product } from '@/types/database'
 import { formatCurrency } from '@/utils/format'
 import { useCurrentOrg } from '@/hooks/useAuth'
 
 export function ProductsPage() {
   const org = useCurrentOrg()
+  const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [showForm, setShowForm] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [editing, setEditing] = useState<Product | null>(null)
   const [deleting, setDeleting] = useState<Product | null>(null)
 
@@ -94,9 +100,27 @@ export function ProductsPage() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Produits & Services</h1>
           <p className="text-sm text-slate-400 mt-0.5">{products.length} article{products.length !== 1 ? 's' : ''}</p>
         </div>
-        <Button icon={<Plus className="w-4 h-4" />} onClick={() => { setEditing(null); setShowForm(true) }}>
-          Nouveau produit
-        </Button>
+        <div className="flex items-center gap-2">
+          {products.length > 0 && (
+            <Button
+              variant="secondary"
+              icon={<Download className="w-4 h-4" />}
+              onClick={() => exportProductsToCSV(products)}
+            >
+              Exporter CSV
+            </Button>
+          )}
+          <Button
+            variant="secondary"
+            icon={<Upload className="w-4 h-4" />}
+            onClick={() => setShowImport(true)}
+          >
+            Importer CSV
+          </Button>
+          <Button icon={<Plus className="w-4 h-4" />} onClick={() => { setEditing(null); setShowForm(true) }}>
+            Nouveau produit
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-3">
@@ -154,6 +178,25 @@ export function ProductsPage() {
         message={`Supprimer "${deleting?.name}" ?`}
         loading={deleteProduct.isPending}
       />
+
+      {/* CSV Import Modal */}
+      {showImport && (
+        <ImportModal
+          open={showImport}
+          onClose={() => setShowImport(false)}
+          type="products"
+          onImport={async (items) => {
+            if (!org) return
+            const rows = items.map(p => ({
+              ...p,
+              organization_id: org.id,
+            }))
+            const { error } = await supabase.from('products').insert(rows)
+            if (error) throw error
+            await queryClient.invalidateQueries({ queryKey: ['products'] })
+          }}
+        />
+      )}
     </div>
   )
 }

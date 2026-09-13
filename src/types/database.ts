@@ -37,6 +37,15 @@ export interface Database {
     }
     Functions: {
       next_document_number: { Args: { p_org_id: string; p_type: string }; Returns: string }
+      create_organization_onboarding: {
+        Args: {
+          p_name: string; p_address?: string | null; p_city?: string | null; p_country?: string | null
+          p_phone?: string | null; p_email?: string | null; p_website?: string | null; p_nif?: string | null
+          p_tax_regime?: string | null; p_currency?: string | null; p_default_vat?: number
+          p_invoice_prefix?: string; p_quote_prefix?: string; p_receipt_prefix?: string; p_po_prefix?: string
+        }
+        Returns: Organization
+      }
       user_org_ids: { Args: Record<never, never>; Returns: string[] }
     }
   }

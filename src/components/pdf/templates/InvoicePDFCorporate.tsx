@@ -1,6 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 import type { PDFProps } from './shared'
-import { formatAmt, fmtDate } from './shared'
+import { formatAmt, fmtDate, getDocumentTitle } from './shared'
 
 const s = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 9, color: '#1e293b', backgroundColor: '#ffffff', padding: 0 },
@@ -35,10 +35,11 @@ const s = StyleSheet.create({
   footerText: { fontSize: 7, color: '#94a3b8', textAlign: 'center', marginTop: 24, marginBottom: 16 },
 })
 
-export function InvoicePDFCorporate({ invoice, org }: PDFProps) {
+export function InvoicePDFCorporate({ invoice, org, documentTitle }: PDFProps) {
   const client = invoice.clients as Record<string, string> | null
-  const items = invoice.invoice_items ?? []
+  const items = invoice.invoice_items ?? invoice.quote_items ?? invoice.purchase_order_items ?? invoice.items ?? []
   const curr = invoice.currency ?? org.currency ?? 'XOF'
+  const title = getDocumentTitle(invoice, documentTitle)
 
   return (
     <Document>
@@ -54,10 +55,12 @@ export function InvoicePDFCorporate({ invoice, org }: PDFProps) {
               {org.email && <Text style={s.orgInfo}>{org.email}</Text>}
             </View>
             <View style={s.titleBlock}>
-              <Text style={s.docTitle}>FACTURE</Text>
+              <Text style={s.docTitle}>{title}</Text>
               <Text style={s.docNum}>{invoice.number}</Text>
               <Text style={s.docMeta}>Date: {fmtDate(invoice.date)}</Text>
-              {invoice.due_date && <Text style={s.docMeta}>Échéance: {fmtDate(invoice.due_date)}</Text>}
+              {invoice.expiry_date ? <Text style={s.docMeta}>Expiration: {fmtDate(invoice.expiry_date)}</Text> : null}
+              {invoice.expected_date ? <Text style={s.docMeta}>Date prévue: {fmtDate(invoice.expected_date)}</Text> : null}
+              {invoice.due_date ? <Text style={s.docMeta}>Échéance: {fmtDate(invoice.due_date)}</Text> : null}
             </View>
           </View>
           <View style={s.hr} />
@@ -97,7 +100,7 @@ export function InvoicePDFCorporate({ invoice, org }: PDFProps) {
 
           <View style={s.totals}>
             <View style={s.tRow}><Text style={s.tLabel}>Sous-total HT</Text><Text style={s.tVal}>{formatAmt(invoice.subtotal_ht, curr)}</Text></View>
-            {invoice.total_discount > 0 && <View style={s.tRow}><Text style={s.tLabel}>Remise</Text><Text style={[s.tVal, { color: '#ea580c' }]}>- {formatAmt(invoice.total_discount, curr)}</Text></View>}
+            {(invoice.total_discount ?? 0) > 0 && <View style={s.tRow}><Text style={s.tLabel}>Remise</Text><Text style={[s.tVal, { color: '#ea580c' }]}>- {formatAmt(invoice.total_discount ?? 0, curr)}</Text></View>}
             <View style={s.tRow}><Text style={s.tLabel}>TVA</Text><Text style={s.tVal}>{formatAmt(invoice.total_tax, curr)}</Text></View>
             <View style={s.grand}>
               <Text style={{ color: '#fff', fontSize: 10, fontFamily: 'Helvetica-Bold' }}>TOTAL TTC</Text>
